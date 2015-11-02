@@ -18,6 +18,9 @@ namespace Carrot.Tests
             _connectionFactory = A.Fake<IConnectionFactory>();
             _model = A.Fake<IModel>();
             _connection = A.Fake<IConnection>();
+
+            A.CallTo(() => _connectionFactory.CreateConnection()).Returns(_connection);
+            A.CallTo(() => _connection.CreateModel()).Returns(_model);
         }
 
         [Test]
@@ -41,30 +44,38 @@ namespace Carrot.Tests
         [Test]
         public void Should_ensure_exchange_exists_when_publishing_a_text_message_to_a_specific_exchange()
         {
-            A.CallTo(() => _connectionFactory.CreateConnection()).Returns(_connection);
-            A.CallTo(() => _connection.CreateModel()).Returns(_model);
-
             var bus = new Bus("host", _connectionFactory);
-            bus.Publish("Hello world!");
+            bus.Publish("Hello world!", "myExchange");
 
-            A.CallTo(() => _model.ExchangeDeclare("amq.direct", "direct")).MustHaveHappened();
+            A.CallTo(() => _model.ExchangeDeclare("myExchange", A<string>._)).MustHaveHappened();
         }
 
         [Test]
         public void Should_publish_utf8_message_content_when_a_message_is_published()
         {
-            A.CallTo(() => _connectionFactory.CreateConnection()).Returns(_connection);
-            A.CallTo(() => _connection.CreateModel()).Returns(_model);
             var bytes = Encoding.UTF8.GetBytes("Hello world!");
 
             var bus = new Bus("host", _connectionFactory);
-            bus.Publish("Hello world!");
+            bus.Publish("Hello world!", "myExchange");
 
             A.CallTo(
                 () =>
                     _model.BasicPublish(A<string>._, A<string>._, A<IBasicProperties>._,
                         A<byte[]>.That.IsSameSequenceAs(bytes))).MustHaveHappened();
         }
+
+        [Test]
+        public void Should_use_provided_exchange_when_publishing_a_message_to_a_specific_exchange()
+        {
+            var bus = new Bus("host", _connectionFactory);
+            bus.Publish("Hello world!", "myExchange");
+
+            A.CallTo(
+                () =>
+                    _model.BasicPublish("myExchange", A<string>._, A<IBasicProperties>._,
+                        A<byte[]>._)).MustHaveHappened();
+        }
+
 
     }
 }
