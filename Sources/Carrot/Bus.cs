@@ -20,12 +20,17 @@ namespace Carrot
 
         public string Host { get; }
 
-        public void Publish(string message, string exchangeName)
+        public void Publish(string message, string exchangeName, string routingKey)
         {
             var model = _connection.CreateModel();
             model.ExchangeDeclare(exchangeName, "direct");
-            model.BasicPublish(exchangeName, string.Empty, model.CreateBasicProperties(),
+            model.BasicPublish(exchangeName, routingKey, model.CreateBasicProperties(),
                 Encoding.UTF8.GetBytes(message));
+        }
+
+        public void Publish(string helloWorld, string exchangeName)
+        {
+            Publish(helloWorld, exchangeName, string.Empty);
         }
     }
 }

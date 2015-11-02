@@ -72,10 +72,20 @@ namespace Carrot.Tests
 
             A.CallTo(
                 () =>
-                    _model.BasicPublish("myExchange", A<string>._, A<IBasicProperties>._,
-                        A<byte[]>._)).MustHaveHappened();
+                    _model.BasicPublish("myExchange", A<string>._, A<IBasicProperties>._, A<byte[]>._))
+                .MustHaveHappened();
         }
 
+        [Test]
+        public void Should_use_provided_routing_key_when_publishing_a_message_with_a_specific_routing_key()
+        {
+            var bus = new Bus("host", _connectionFactory);
+            bus.Publish("Hello world!", "myExchange", "routing.key");
 
+            A.CallTo(
+                () =>
+                    _model.BasicPublish(A<string>._, "routing.key", A<IBasicProperties>._, A<byte[]>._))
+                .MustHaveHappened();
+        }
     }
 }
