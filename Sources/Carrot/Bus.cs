@@ -14,7 +14,8 @@ namespace Carrot
 
         public Bus(string host, IConnectionFactory connectionFactory)
         {
-            Host = host;
+            var tokens = host.Split('=');
+            Host = tokens[1];
             _connection = connectionFactory.CreateConnection();
         }
 
