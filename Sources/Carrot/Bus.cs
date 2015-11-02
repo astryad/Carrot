@@ -1,10 +1,11 @@
-﻿using RabbitMQ.Client;
+﻿using System.Text;
+using RabbitMQ.Client;
 
 namespace Carrot
 {
     public class Bus
     {
-        private IConnection _connection;
+        private readonly IConnection _connection;
 
         public Bus(string host)
             : this(host, new ConnectionFactory())
@@ -23,6 +24,8 @@ namespace Carrot
         {
             var model = _connection.CreateModel();
             model.ExchangeDeclare("amq.direct", "direct");
+            model.BasicPublish("amq.direct", string.Empty, model.CreateBasicProperties(),
+                Encoding.UTF8.GetBytes(message));
         }
     }
 }

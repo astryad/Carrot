@@ -1,4 +1,5 @@
-﻿using FakeItEasy;
+﻿using System.Text;
+using FakeItEasy;
 using NFluent;
 using NUnit.Framework;
 using RabbitMQ.Client;
@@ -7,8 +8,8 @@ namespace Carrot.Tests
 {
     public class BusTests
     {
-        private IConnectionFactory _connectionFactory;
         private IConnection _connection;
+        private IConnectionFactory _connectionFactory;
         private IModel _model;
 
         [SetUp]
@@ -17,7 +18,6 @@ namespace Carrot.Tests
             _connectionFactory = A.Fake<IConnectionFactory>();
             _model = A.Fake<IModel>();
             _connection = A.Fake<IConnection>();
-
         }
 
         [Test]
@@ -49,5 +49,22 @@ namespace Carrot.Tests
 
             A.CallTo(() => _model.ExchangeDeclare("amq.direct", "direct")).MustHaveHappened();
         }
+
+        [Test]
+        public void Should_publish_utf8_message_content_when_a_message_is_published()
+        {
+            A.CallTo(() => _connectionFactory.CreateConnection()).Returns(_connection);
+            A.CallTo(() => _connection.CreateModel()).Returns(_model);
+            var bytes = Encoding.UTF8.GetBytes("Hello world!");
+
+            var bus = new Bus("host", _connectionFactory);
+            bus.Publish("Hello world!");
+
+            A.CallTo(
+                () =>
+                    _model.BasicPublish(A<string>._, A<string>._, A<IBasicProperties>._,
+                        A<byte[]>.That.IsSameSequenceAs(bytes))).MustHaveHappened();
+        }
+
     }
 }
