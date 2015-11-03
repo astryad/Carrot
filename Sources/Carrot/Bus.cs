@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Carrot.Model;
 using RabbitMQ.Client;
 
 namespace Carrot
@@ -21,17 +22,19 @@ namespace Carrot
 
         public string Host { get; }
 
-        public void Publish(string message, string exchangeName, string routingKey)
+        public void Publish(string message, Exchange exchange, string routingKey)
         {
-            var model = _connection.CreateModel();
-            model.ExchangeDeclare(exchangeName, "direct");
-            model.BasicPublish(exchangeName, routingKey, model.CreateBasicProperties(),
-                Encoding.UTF8.GetBytes(message));
+            Publish(message, exchange, routingKey, new Utf8MessageSerializer());
         }
 
-        public void Publish(string helloWorld, string exchangeName)
+        public void Publish(string message, Exchange exchange, string routingKey, IMessageSerializer messageSerializer)
         {
-            Publish(helloWorld, exchangeName, string.Empty);
+            using (var model = _connection.CreateModel())
+            {
+                model.ExchangeDeclare(exchange.Name, exchange.Type);
+                var content = messageSerializer.Serialize(message);
+                model.BasicPublish(exchange.Name, routingKey, model.CreateBasicProperties(), content);
+            }
         }
     }
 }
