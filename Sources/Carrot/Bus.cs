@@ -1,5 +1,4 @@
-﻿using System.Text;
-using Carrot.Model;
+﻿using Carrot.Model;
 using RabbitMQ.Client;
 
 namespace Carrot
@@ -21,6 +20,16 @@ namespace Carrot
         }
 
         public string Host { get; }
+
+        public void Publish(string message, Exchange exchange)
+        {
+            Publish(message, exchange, string.Empty);
+        }
+
+        public void Publish(string message, Exchange exchange, IMessageSerializer messageSerializer)
+        {
+            Publish(message, exchange, string.Empty, messageSerializer);
+        }
 
         public void Publish(string message, Exchange exchange, string routingKey)
         {
